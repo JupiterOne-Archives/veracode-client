@@ -12,7 +12,10 @@ const mockDate = new Date('2001-09-11T08:46:00');
 const realDateNow = Date.now;
 const veracodeClient = new VeracodeClient(mockApiId, mockApiSecret);
 
-jest.spyOn(crypto, 'randomBytes').mockReturnValue(mockNonce);
+jest.spyOn(crypto, 'randomBytes').mockImplementation((size) => {
+  expect(typeof size).toBe('number');
+  return mockNonce;
+})
 
 jest.mock('request');
 jest.mock('fs');

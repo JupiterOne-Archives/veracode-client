@@ -5,7 +5,9 @@
   "main": "src/VeracodeClient.js",
   "scripts": {
     "lint": "eslint src test",
-    "test": "jest"
+    "test": "yarn test:unit",
+    "test:unit": "jest src/",
+    "test:integration": "jest -i test/"
   },
   "repository": {
     "type": "git",

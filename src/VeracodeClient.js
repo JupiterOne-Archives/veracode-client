@@ -57,7 +57,7 @@ class VeracodeClient {
     const veraURL = url.pathname + url.search;
     const data = `id=${this.apiId}&host=${hostName}&url=${veraURL}&method=${httpMethod}`;
     const dateStamp = this.currentDateStamp();
-    const nonceBytes = this.newNonce(this.requestVersion);
+    const nonceBytes = this.newNonce(this.nonceSize);
     const dataSignature = this.calculateDataSignature(this.apiKey, nonceBytes, dateStamp, data);
     const authorizationParam = `id=${this.apiId},ts=${dateStamp},nonce=${nonceBytes.toString('hex')},sig=${dataSignature.toString('hex')}`;
     return `${this.authScheme} ${authorizationParam}`;
