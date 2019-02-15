@@ -60,6 +60,23 @@ const scanId = await veraClient.beginPrescan(testAppInfo).build.analysis_unit._a
 console.log('New Scan ID:', scanId);
 ```
 
+## Development
+
+To run the integration tests, you'll need a Veracode API id and secret. Follow
+the [instructions on
+Veracode](https://help.veracode.com/reader/LMv_dtSHyb7iIxAQznC~9w/Gv1oHnvAIwMy2gQSBrF0fA)
+to obtain these credentials.
+
+Once you have them, run this in your shell (with your id and secret substituted,
+of course):
+
+```sh
+export VERA_ID=YOUR_VERACODE_ID
+export VERA_KEY=YOUR_VERACODE_SECRET
+```
+
+Now you'll be able to run the integration tests with `yarn test:integration`.
+
 ## Notes
 
  1. Not all functions are currently implemented. List of implemented functions:
