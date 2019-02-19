@@ -67,7 +67,7 @@ class VeracodeClient {
   /* Veracode XML API Wrapper */
 
   async _xmlRequest (options) {
-    const uri = new URL(options.endPoint, options.apiBase || this.apiBase);
+    const uri = new URL(options.endpoint, options.apiBase || this.apiBase);
     const method = (options.form || options.formData) ? 'POST' : 'GET';
 
     const xmlResponse = await request({
@@ -93,7 +93,7 @@ class VeracodeClient {
   /* Veracode REST API Wrapper */
 
   async _restRequest (options) {
-    const uri = new URL(options.endPoint, options.apiBase || this.apiBaseRest);
+    const uri = new URL(options.endpoint, options.apiBase || this.apiBaseRest);
     const method = 'GET';
 
     const response = await request({
@@ -105,31 +105,29 @@ class VeracodeClient {
     });
     const responseParsed = JSON.parse(response);
 
-    return this.getEmbedded(responseParsed);
+    const pathParts = options.endpoint.split('/');
+    const resource = pathParts[pathParts.length - 1];
+    return this.getEmbedded(responseParsed, resource);
   }
 
   /* Veracode API functions */
 
   async getApplications () {
-    const response = await this._restRequest({
-      endPoint: 'applications'
+    return this._restRequest({
+      endpoint: 'applications'
     });
-
-    return response.applications;
   };
 
   async getFindings (applicationGuid) {
-    const response = await this._restRequest({
-      endPoint: `applications/${applicationGuid}/findings`
+    return this._restRequest({
+      endpoint: `applications/${applicationGuid}/findings`
     });
-
-    return response.findings;
   };
 
   // "The getapplist.do call compiles a list of the applications in the portfolio."
   async getAppList () {
     const response = await this._xmlRequest({
-      endPoint: 'getapplist.do'
+      endpoint: 'getapplist.do'
     });
 
     return this.controlledArray(response.applist.app);
@@ -138,7 +136,7 @@ class VeracodeClient {
   // "The getsandboxlist.do call returns a list of all the sandboxes associated with the specified application."
   async getSandboxList (options) {
     const response = await this._xmlRequest({
-      endPoint: 'getsandboxlist.do',
+      endpoint: 'getsandboxlist.do',
       form: {
         app_id: options.appId
       }
@@ -150,7 +148,7 @@ class VeracodeClient {
   // "The createsandbox.do call creates a sandbox for the specified application."
   async createSandbox (options) {
     const response = await this._xmlRequest({
-      endPoint: 'createsandbox.do',
+      endpoint: 'createsandbox.do',
       form: {
         app_id: options.appId,
         sandbox_name: options.sandboxName
@@ -163,7 +161,7 @@ class VeracodeClient {
   // "The getbuildlist call produces a list of the policy or sandbox scans of the application that are currently in progress or already complete."
   async getBuildList (options) {
     const response = await this._xmlRequest({
-      endPoint: 'getbuildlist.do',
+      endpoint: 'getbuildlist.do',
       form: {
         app_id: options.appId,
         sandbox_id: options.sandboxId
@@ -177,7 +175,7 @@ class VeracodeClient {
   // Does not include sandboxes
   async getAppBuilds (options = {}) {
     const response = await this._xmlRequest({
-      endPoint: 'getappbuilds.do',
+      endpoint: 'getappbuilds.do',
       apiBase: this.apiBase4, // note the use of API v4, this call is not available in v5
       form: {
         report_changed_since: options.reportChangedSince,
@@ -192,7 +190,7 @@ class VeracodeClient {
   // "The detailedreport.do call returns a detailed XML report of the scan results for the specified build."
   async detailedReport (options) {
     const response = await this._xmlRequest({
-      endPoint: 'detailedreport.do',
+      endpoint: 'detailedreport.do',
       form: {
         build_id: options.buildId
       }
@@ -219,7 +217,7 @@ class VeracodeClient {
     }
 
     const response = await this._xmlRequest({
-      endPoint: 'uploadfile.do',
+      endpoint: 'uploadfile.do',
       formData
     });
 
@@ -229,7 +227,7 @@ class VeracodeClient {
   // "The beginprescan call runs the prescan of the application and determines whether the auto-scan feature is on or off"
   async beginPrescan (options) {
     const response = await this._xmlRequest({
-      endPoint: 'beginprescan.do',
+      endpoint: 'beginprescan.do',
       form: {
         app_id: options.appId,
         auto_scan: options.autoScan,
@@ -244,7 +242,7 @@ class VeracodeClient {
   // "Creates a new application in the portfolio."
   async createApp (options) {
     const response = await this._xmlRequest({
-      endPoint: 'createapp.do',
+      endpoint: 'createapp.do',
       form: {
         app_name: options.appName, // required
         description: options.description,
@@ -271,7 +269,7 @@ class VeracodeClient {
   // "The createbuild.do call creates a new build of an existing application in the portfolio."
   async createBuild (options) {
     const response = await this._xmlRequest({
-      endPoint: 'createbuild.do',
+      endpoint: 'createbuild.do',
       form: {
         app_id: options.appId,
         version: options.appVersion,
@@ -288,7 +286,7 @@ class VeracodeClient {
   // "The getbuildinfo call provides information about the most recent or specific scan of the application."
   async getBuildInfo (options) {
     const response = await this._xmlRequest({
-      endPoint: 'getbuildinfo.do',
+      endpoint: 'getbuildinfo.do',
       form: {
         app_id: options.appId,
         build_id: options.buildId,
@@ -302,7 +300,7 @@ class VeracodeClient {
   // "The deleteapp.do call deletes an existing application in the portfolio."
   async deleteApp (options) {
     const response = await this._xmlRequest({
-      endPoint: 'deleteapp.do',
+      endpoint: 'deleteapp.do',
       form: {
         app_id: options.appId
       }
@@ -355,9 +353,9 @@ class VeracodeClient {
     return typeof a === 'undefined' ? [] : [].concat(a);
   }
 
-  getEmbedded(response) {
+  getEmbedded(response, resource) {
     if (response._embedded) {
-      return response._embedded;
+      return response._embedded[resource];
     } else {
       return [];
     }
