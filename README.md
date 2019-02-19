@@ -7,7 +7,7 @@ documentation](https://help.veracode.com/reader/LMv_dtSHyb7iIxAQznC~9w/FhxRdiWf5
 ## Install
 
 ```bash
-yarn add @lifeomic/veracode-client
+yarn add @lifeomic/veracode-client-js
 ```
 
 ## Usage
