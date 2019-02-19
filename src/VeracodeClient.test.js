@@ -64,14 +64,14 @@ test('#calculateAuthorizationHeader', async () => {
   expect(authHeader).toBe(mockAuthHeader(url, 'GET'));
 });
 
-describe("#_request", () => {
+describe('#_xmlRequest', () => {
   test('parses xml', async () => {
     request.mockResolvedValue(`
     <test account_id="123" app_id="456">
       <nested nested_id="789"/>
     </test>
     `);
-    const response = await veracodeClient._request({ endPoint: "mytest.do" });
+    const response = await veracodeClient._xmlRequest({ endPoint: "mytest.do" });
     const expectedUrl = new URL('mytest.do', veracodeClient.apiBase);
     expect(request).toBeCalledWith(baseRequestArg(expectedUrl, 'GET'));
     expect(response).toEqual({
@@ -91,7 +91,37 @@ describe("#_request", () => {
 
   test('throws error', async () => {
     request.mockResolvedValue('<error>Baby did a boom boom</error>');
-    expect(veracodeClient._request({ endPoint: "mytest.do" })).rejects.toThrow("Baby did a boom boom");
+    expect(veracodeClient._xmlRequest({ endPoint: "mytest.do" })).rejects.toThrow("Baby did a boom boom");
+  });
+});
+
+describe('#_restRequest', () => {
+  test('returns _embedded', async () => {
+    request.mockResolvedValue(`
+    {
+      "_embedded": {
+        "applications": [{
+          "guid": "some-long-guid",
+          "id": 123456
+        }]
+      }
+    }
+    `)
+    const response = await veracodeClient._restRequest({ endPoint: 'applications' });
+    const expectedUrl = new URL('applications', veracodeClient.apiBaseRest);
+    expect(request).toBeCalledWith({
+      method: 'GET',
+      uri: expectedUrl,
+      headers: {
+        'Authorization': mockAuthHeader(expectedUrl, 'GET')
+      }
+    });
+    expect(response).toEqual({
+      applications: [{
+        guid: 'some-long-guid',
+        id: 123456
+      }]
+    });
   });
 });
 
