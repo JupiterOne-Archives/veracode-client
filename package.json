@@ -1,7 +1,7 @@
 {
   "name": "@lifeomic/veracode-client-js",
   "description": "JavaScript Veracode API client",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "main": "src/VeracodeClient.js",
   "scripts": {
     "lint": "eslint src test",
