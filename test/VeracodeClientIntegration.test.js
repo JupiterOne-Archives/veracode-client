@@ -1,25 +1,25 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
-const jspath = require('jspath');
-const moment = require('moment');
-const tempy = require('tempy');
+const jspath = require("jspath");
+const moment = require("moment");
+const tempy = require("tempy");
 
-const VeracodeClient = require('../src/VeracodeClient');
+const VeracodeClient = require("../src/VeracodeClient");
 
 // Something unique for each build of this repository
 // Unix ms timestamp is unique enough
-const somethingUnique = moment().format('x');
+const somethingUnique = moment().format("x");
 const timeout = 60000;
 
 const testApp = {
-  appName: 'veracode-client-test',
+  appName: "veracode-client-test",
   appVersion: `test-version-${somethingUnique}`,
   sandboxName: `test-sandbox-${somethingUnique}`,
-  businessCriticality: 'High', // 'High' is used by security-scan, so using it here as well
-  teams: 'Security', // Only security team will get notifications about this test app
+  businessCriticality: "High", // 'High' is used by security-scan, so using it here as well
+  teams: "Security", // Only security team will get notifications about this test app
   autoScan: true, // Required to start scan automatically after pre-scan
-  description: 'This application is used to test veracode-client'
+  description: "This application is used to test veracode-client",
 };
 
 const veraClient = new VeracodeClient(process.env.VERA_ID, process.env.VERA_KEY);
@@ -47,7 +47,7 @@ beforeAll(async () => {
   expect(searchResult.length).toBeLessThanOrEqual(1);
 
   if (searchResult.length > 0) {
-    console.log('Test application was located under Application ID', searchResult[0]);
+    console.log("Test application was located under Application ID", searchResult[0]);
     testApp.appId = searchResult[0];
   } else {
     console.log(`Test application '${testApp.appName}' was not found in Veracode. It will be created...`);
@@ -57,11 +57,11 @@ beforeAll(async () => {
 }, timeout);
 
 // All tests working with veracode API directly are serial - it does not handle async load well
-test('Create and delete a temp app', async () => {
+test("Create and delete a temp app", async () => {
   const tempAppInfo = {
     appName: `veracode-client-temp-${somethingUnique}`,
-    businessCriticality: 'Low',
-    description: 'This application is used in veracode-client unit tests. It\'s safe to remove it'
+    businessCriticality: "Low",
+    description: "This application is used in veracode-client unit tests. It's safe to remove it",
   };
 
   // Create a temp application
@@ -77,7 +77,7 @@ test('Create and delete a temp app', async () => {
   expect(deleteAppResult).toBeInstanceOf(Array);
 }, timeout);
 
-test('Create and start a new static scan', async () => {
+test("Create and start a new static scan", async () => {
   const testAppInfo = { ...testApp };
 
   // Create a new sandbox
@@ -93,11 +93,11 @@ test('Create and start a new static scan', async () => {
   testAppInfo.buildId = createBuildResult.build._attributes.build_id;
 
   // Create ZIP archive
-  const targetDir = path.resolve(__dirname, '../src'); // just give it something small
-  testAppInfo.file = tempy.file({name: `${testAppInfo.appVersion}.zip`});
+  const targetDir = path.resolve(__dirname, "../src"); // just give it something small
+  testAppInfo.file = tempy.file({ name: `${testAppInfo.appVersion}.zip` });
   try {
-    await veraClient.createZipArchive(targetDir, testAppInfo.file, ['node_modules/**/*']);
-    expect(fs.existsSync(testAppInfo.file, 'Should create a ZIP archive')).toBeTruthy();
+    await veraClient.createZipArchive(targetDir, testAppInfo.file, ["node_modules/**/*"]);
+    expect(fs.existsSync(testAppInfo.file, "Should create a ZIP archive")).toBeTruthy();
 
     // Upload ZIP archive to Veracode
     const uploadResult = await veraClient.uploadFile(testAppInfo);
@@ -111,21 +111,21 @@ test('Create and start a new static scan', async () => {
     // Test detailedReport error - duplicated here in a hope that will be
     // running in parallel some day. Report for this test app is not yet
     // available, so we expect a specific error here
-    expect(veraClient.detailedReport(testAppInfo)).rejects.toThrow('No report available.');
+    expect(veraClient.detailedReport(testAppInfo)).rejects.toThrow("No report available.");
   } finally {
     // Delete ZIP archive
     fs.unlinkSync(testAppInfo.file);
   }
 }, timeout);
 
-test('Get list of builds for all applications', async () => {
-  const getAppBuilds = await veraClient.getAppBuilds({includeInProgress: true});
+test("Get list of builds for all applications", async () => {
+  const getAppBuilds = await veraClient.getAppBuilds({ includeInProgress: true });
   expect(getAppBuilds).toBeInstanceOf(Array);
   expect(getAppBuilds[0]._attributes.modified_date).toBeDefined();
 }, timeout);
 
 // Scans take anything from 2-4+ hours, so using a previously completed scan
-test('Get report for a previous scan', async () => {
+test("Get report for a previous scan", async () => {
   const testAppInfo = { ...testApp };
 
   // Go through each previous build in all sandboxes and search for a completed scan
@@ -139,16 +139,16 @@ test('Get report for a previous scan', async () => {
     // Only look for scans in sanboxes - promoted scans would be created manually, so not in scope of the test
     for (const sandbox of getSandboxListResult) {
       // Get list of builds for each sandbox and test getBuildList()
-      const sandboxBuildList = await veraClient.getBuildList({appId: testAppInfo.appId, sandboxId: sandbox._attributes.sandbox_id});
+      const sandboxBuildList = await veraClient.getBuildList({ appId: testAppInfo.appId, sandboxId: sandbox._attributes.sandbox_id });
       expect(sandboxBuildList).toBeInstanceOf(Array);
 
       if (sandboxBuildList.length > 0) {
         expect(sandboxBuildList[0]._attributes.build_id).toBeDefined();
         for (const sandboxBuild of sandboxBuildList) {
           try {
-            const detailedReportResult = await veraClient.detailedReport({buildId: sandboxBuild._attributes.build_id});
+            const detailedReportResult = await veraClient.detailedReport({ buildId: sandboxBuild._attributes.build_id });
             buildLocated = true;
-            expect(detailedReportResult['flaw-status']).toBeDefined();
+            expect(detailedReportResult["flaw-status"]).toBeDefined();
           } catch (error) {
             // This will be kept here for debugging purposes. The message below, if enabled, should be extremely rare to see
             // console.log('Located build:', sandboxBuild._attributes.build_id, 'Status: ', error.message);
@@ -158,9 +158,9 @@ test('Get report for a previous scan', async () => {
     } //        / \  / >
 
     if (!buildLocated) {
-      console.log('Some tests skipped: No builds with finished scans found. It may take several hours for a scan started by this test run to complete');
+      console.log("Some tests skipped: No builds with finished scans found. It may take several hours for a scan started by this test run to complete");
     }
   } else {
-    console.log('Some tests skipped: No sandboxes found. Next time this test runs, some sandboxes should be available');
+    console.log("Some tests skipped: No sandboxes found. Next time this test runs, some sandboxes should be available");
   }
 }, timeout);
