@@ -1,52 +1,58 @@
-const VeracodeClient = require('./VeracodeClient');
-const crypto = require('crypto');
-const request = require('request');
-const { URL } = require('url');
-const fs = require('fs');
-const archiver = require('archiver');
+/**
+ * We need to disable no-callback-in-promise rule because we have to call Jest's
+ * done inside of promise handlers.
+ */
 
-const mockApiId = 'fake';
-const mockApiSecret = 'also-fake';
-const mockNonce = new Buffer('asdf');
-const mockDate = new Date('2001-09-11T08:46:00');
+/* eslint promise/no-callback-in-promise:0 */
+const VeracodeClient = require("./VeracodeClient");
+const crypto = require("crypto");
+const request = require("request");
+const { URL } = require("url");
+const fs = require("fs");
+const archiver = require("archiver");
+
+const mockApiId = "fake";
+const mockApiSecret = "also-fake";
+const mockNonce = Buffer.from("asdf");
+const mockDate = new Date("2001-09-11T08:46:00");
 const realDateNow = Date.now;
 const veracodeClient = new VeracodeClient(mockApiId, mockApiSecret);
 
-jest.spyOn(crypto, 'randomBytes').mockImplementation((size) => {
-  expect(typeof size).toBe('number');
+jest.spyOn(crypto, "randomBytes").mockImplementation((size) => {
+  expect(typeof size).toBe("number");
   return mockNonce;
-})
+});
 
-jest.mock('request');
-jest.mock('fs');
-jest.mock('archiver');
+jest.mock("request");
+jest.mock("fs");
+jest.mock("archiver");
 
 function computeHash (data, key) {
-  const hmac = crypto.createHmac('sha256', key);
+  const hmac = crypto.createHmac("sha256", key);
   hmac.update(data);
   return hmac.digest();
 }
 
-function mockAuthHeader(url, method) {
+function mockAuthHeader (url, method) {
   const data = `id=${mockApiId}&host=${url.host}&url=${url.pathname + url.search}&method=${method}`;
 
-  const hashedNonce = computeHash(mockNonce, Buffer.from(mockApiSecret, 'hex'));
+  const hashedNonce = computeHash(mockNonce, Buffer.from(mockApiSecret, "hex"));
   const hashedDate = computeHash(mockDate.toString(), hashedNonce);
-  const hashedVersionCode = computeHash('vcode_request_version_1', hashedDate);
+  const hashedVersionCode = computeHash("vcode_request_version_1", hashedDate);
   const signature = computeHash(data, hashedVersionCode);
 
-  const authParam = `id=${mockApiId},ts=${mockDate.toString()},nonce=${mockNonce.toString('hex')},sig=${signature.toString('hex')}`;
+  const authParam = `id=${mockApiId},ts=${mockDate.toString()},nonce=${mockNonce.toString("hex")},sig=${signature.toString("hex")}`;
   return `VERACODE-HMAC-SHA-256 ${authParam}`;
 }
 
-function baseRequestArg(url, method = 'POST') {
+function baseRequestArg (url, method = "POST") {
   return {
     method: method,
     uri: url,
     headers: {
-      'Authorization': mockAuthHeader(url, method)
+      "Authorization": mockAuthHeader(url, method),
     },
-    gzip: true
+    gzip: true,
   };
 }
 
@@ -58,45 +64,45 @@ afterAll(() => {
   Date.now = realDateNow;
 });
 
-test('#calculateAuthorizationHeader', async () => {
-  const url = new URL('action.do', veracodeClient.apiBase);
-  const authHeader = veracodeClient.calculateAuthorizationHeader(url, 'GET');
-  expect(authHeader).toBe(mockAuthHeader(url, 'GET'));
+test("#calculateAuthorizationHeader", async () => {
+  const url = new URL("action.do", veracodeClient.apiBase);
+  const authHeader = veracodeClient.calculateAuthorizationHeader(url, "GET");
+  expect(authHeader).toBe(mockAuthHeader(url, "GET"));
 });
 
-describe('#_xmlRequest', () => {
-  test('parses xml', async () => {
+describe("#_xmlRequest", () => {
+  test("parses xml", async () => {
     request.mockResolvedValue(`
     <test account_id="123" app_id="456">
       <nested nested_id="789"/>
     </test>
     `);
     const response = await veracodeClient._xmlRequest({ endpoint: "mytest.do" });
-    const expectedUrl = new URL('mytest.do', veracodeClient.apiBase);
-    expect(request).toBeCalledWith(baseRequestArg(expectedUrl, 'GET'));
+    const expectedUrl = new URL("mytest.do", veracodeClient.apiBase);
+    expect(request).toBeCalledWith(baseRequestArg(expectedUrl, "GET"));
     expect(response).toEqual({
       test: {
         _attributes: {
           account_id: "123",
-          app_id: "456"
+          app_id: "456",
         },
         nested: {
           _attributes: {
-            nested_id: "789"
-          }
-        }
-      }
+            nested_id: "789",
+          },
+        },
+      },
     });
   });
 
-  test('throws error', async () => {
-    request.mockResolvedValue('<error>Baby did a boom boom</error>');
+  test("throws error", async () => {
+    request.mockResolvedValue("<error>Baby did a boom boom</error>");
     expect(veracodeClient._xmlRequest({ endpoint: "mytest.do" })).rejects.toThrow("Baby did a boom boom");
   });
 });
 
-describe('#_restRequest', () => {
-  test('returns _embedded', async () => {
+describe("#_restRequest", () => {
+  test("returns _embedded", async () => {
     request.mockResolvedValue(`
     {
       "_embedded": {
@@ -107,65 +113,65 @@ describe('#_restRequest', () => {
       }
     }
     `);
-    const response = await veracodeClient._restRequest({ endpoint: 'applications' });
-    const expectedUrl = new URL('applications', veracodeClient.apiBaseRest);
+    const response = await veracodeClient._restRequest({ endpoint: "applications" });
+    const expectedUrl = new URL("applications", veracodeClient.apiBaseRest);
     expect(request).toBeCalledWith({
-      method: 'GET',
+      method: "GET",
       uri: expectedUrl,
       headers: {
-        'Authorization': mockAuthHeader(expectedUrl, 'GET')
-      }
+        "Authorization": mockAuthHeader(expectedUrl, "GET"),
+      },
     });
     expect(response).toEqual([{
-      guid: 'some-long-guid',
-      id: 123456
+      guid: "some-long-guid",
+      id: 123456,
     }]);
   });
 
-  test('returns empty array if no _embedded', async () => {
-    request.mockResolvedValue(`{}`);
-    const response = await veracodeClient._restRequest({ endpoint: 'applications' });
+  test("returns empty array if no _embedded", async () => {
+    request.mockResolvedValue("{}");
+    const response = await veracodeClient._restRequest({ endpoint: "applications" });
     expect(response).toEqual([]);
   });
 });
 
-describe('#uploadFile', async () => {
-  test('uploads file with all options', async () => {
-    request.mockResolvedValue('<filelist><file/></filelist>');
-    
+describe("#uploadFile", async () => {
+  test("uploads file with all options", async () => {
+    request.mockResolvedValue("<filelist><file/></filelist>");
+
     await veracodeClient.uploadFile({ appId: "123", file: "my_lil_file.zip", sandboxId: "456", saveAs: "my_lil_file" });
     expect(fs.createReadStream).toBeCalledWith("my_lil_file.zip");
-    
-    const expectedUrl = new URL('uploadfile.do', veracodeClient.apiBase);
+
+    const expectedUrl = new URL("uploadfile.do", veracodeClient.apiBase);
     expect(request).toBeCalledWith({
       ...baseRequestArg(expectedUrl),
       formData: {
         app_id: "123",
         file: undefined,
         sandbox_id: "456",
-        save_as: "my_lil_file"
-      }
+        save_as: "my_lil_file",
+      },
     });
   });
 
-  test('doesn\'t include sandbox_id or save_as if not provided in options', async () => {
-    request.mockResolvedValue('<filelist><file/></filelist>');
-    
+  test("doesn't include sandbox_id or save_as if not provided in options", async () => {
+    request.mockResolvedValue("<filelist><file/></filelist>");
+
     await veracodeClient.uploadFile({ appId: "123", file: "my_lil_file.zip" });
     expect(fs.createReadStream).toBeCalledWith("my_lil_file.zip");
-    
-    const expectedUrl = new URL('uploadfile.do', veracodeClient.apiBase);
+
+    const expectedUrl = new URL("uploadfile.do", veracodeClient.apiBase);
     expect(request).toBeCalledWith({
       ...baseRequestArg(expectedUrl),
       formData: {
         app_id: "123",
-        file: undefined
-      }
+        file: undefined,
+      },
     });
   });
 });
 
-describe('#createZipArchive', async () => {
+describe("#createZipArchive", async () => {
   let mockWriteStream = {
     registeredListeners: {},
 
@@ -205,37 +211,40 @@ describe('#createZipArchive', async () => {
     mockWriteStream.registeredListeners = {};
   });
 
-  test('returns archive size', async done => {
-    veracodeClient.createZipArchive('testdir', 'test', null).then((archiveSize) => {
+  test("returns archive size", async done => {
+    veracodeClient.createZipArchive("testdir", "test", null).then((archiveSize) => {
       expect(archiveSize).toBe(420);
-      done();
-    });
-    mockWriteStream.simulate('close');
+      return done();
+    }).catch(err => { throw err; });
+    mockWriteStream.simulate("close");
   });
 
-  test('rejects on fatal warning', async done => {
-    veracodeClient.createZipArchive('testdir', 'test', null).catch((warning) => {
+  test("rejects on fatal warning", async done => {
+    veracodeClient.createZipArchive("testdir", "test", null).catch((warning) => {
       expect(warning.code).toBe(1);
       done();
-    });
-    mockArchiver.simulate('warning', { code: 1 });
+    }).catch(err => { throw err; });
+    mockArchiver.simulate("warning", { code: 1 });
   });
 
-  test('logs to console with non-fatal warnings', async done => {
-    jest.spyOn(console, 'log').mockImplementationOnce(() => {});
-    veracodeClient.createZipArchive('testdir', 'test', null).then(() => {
-      done();
-    });
-    mockArchiver.simulate('warning', { code: 'ENOENT', message: 'do not do that plz' });
-    mockWriteStream.simulate('close');
-    expect(console.log).toHaveBeenCalledWith('Warning: do not do that plz');
+  test("logs to console with non-fatal warnings", async done => {
+    jest.spyOn(console, "log").mockImplementationOnce(() => {});
+    veracodeClient
+      .createZipArchive("testdir", "test", null)
+      .then(() => {
+        return done();
+      })
+      .catch(err => { throw err; });
+    mockArchiver.simulate("warning", { code: "ENOENT", message: "do not do that plz" });
+    mockWriteStream.simulate("close");
+    expect(console.log).toHaveBeenCalledWith("Warning: do not do that plz");
   });
 
-  test('rejects on archiver error', async done => {
-    veracodeClient.createZipArchive('testdir', 'test', null).catch((error) => {
-      expect(error).toEqual({ code: 'borked', message: 'it borked' });
+  test("rejects on archiver error", async done => {
+    veracodeClient.createZipArchive("testdir", "test", null).catch((error) => {
+      expect(error).toEqual({ code: "borked", message: "it borked" });
       done();
     });
-    mockArchiver.simulate('error', { code: 'borked', message: 'it borked' });
+    mockArchiver.simulate("error", { code: "borked", message: "it borked" });
   });
 });

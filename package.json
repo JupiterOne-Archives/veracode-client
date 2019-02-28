@@ -3,9 +3,11 @@
   "description": "JavaScript Veracode API client",
   "version": "0.1.1",
   "main": "src/VeracodeClient.js",
+  "files": ["/src"],
+  "engines": { "node": ">=8.10" },
   "scripts": {
     "lint": "eslint src test",
-    "test": "yarn test:unit",
+    "test": "yarn lint && yarn test:unit",
     "test:unit": "jest src/",
     "test:integration": "jest -i test/"
   },
@@ -26,7 +28,10 @@
     "xml-js": "^1.5.2"
   },
   "devDependencies": {
-    "eslint": "^4.9.0",
+    "eslint": "^5.14.1",
+    "eslint-config-standard": "^12.0.0",
+    "eslint-plugin-node": "^8.0.1",
+    "eslint-plugin-promise": "^4.0.1",
     "jest": "^24.1.0",
     "jspath": "^0.4.0",
     "moment": "^2.24.0",

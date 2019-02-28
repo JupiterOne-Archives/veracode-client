@@ -1,32 +1,32 @@
 // Native libs
-const crypto = require('crypto');
-const { URL } = require('url');
-const fs = require('fs');
+const crypto = require("crypto");
+const { URL } = require("url");
+const fs = require("fs");
 
 // 3rd party libs
-const request = require('request-promise-native');
-const convert = require('xml-js');
-const archiver = require('archiver');
+const request = require("request-promise-native");
+const convert = require("xml-js");
+const archiver = require("archiver");
 
 /* Veracode HTTP request wrapper */
 class VeracodeClient {
   constructor (apiId, apiKey) {
     // Errors returned on undefined API credentials are too confusing
     if (!(apiId && apiKey)) {
-      throw new Error('Both Veracode API ID and key must be defined');
+      throw new Error("Both Veracode API ID and key must be defined");
     }
 
     this.apiId = apiId;
     this.apiKey = apiKey;
 
-    this.hashAlgorithm = 'sha256';
-    this.authScheme = 'VERACODE-HMAC-SHA-256';
-    this.requestVersion = 'vcode_request_version_1';
+    this.hashAlgorithm = "sha256";
+    this.authScheme = "VERACODE-HMAC-SHA-256";
+    this.requestVersion = "vcode_request_version_1";
     this.nonceSize = 16;
 
-    this.apiBase = 'https://analysiscenter.veracode.com/api/5.0/';
-    this.apiBase4 = 'https://analysiscenter.veracode.com/api/4.0/'; // some functionality is only available in v4
-    this.apiBaseRest = 'https://api.veracode.com/appsec/v1/';
+    this.apiBase = "https://analysiscenter.veracode.com/api/5.0/";
+    this.apiBase4 = "https://analysiscenter.veracode.com/api/4.0/"; // some functionality is only available in v4
+    this.apiBaseRest = "https://api.veracode.com/appsec/v1/";
   }
 
   /* Authorization Header */
@@ -46,7 +46,7 @@ class VeracodeClient {
   }
 
   calculateDataSignature (apiKey, nonceBytes, dateStamp, data) {
-    const kNonce = this.computeHash(nonceBytes, Buffer.from(apiKey, 'hex'));
+    const kNonce = this.computeHash(nonceBytes, Buffer.from(apiKey, "hex"));
     const kDate = this.computeHash(dateStamp, kNonce);
     const kSignature = this.computeHash(this.requestVersion, kDate);
     return this.computeHash(data, kSignature);
@@ -60,7 +60,7 @@ class VeracodeClient {
     const dateStamp = this.currentDateStamp();
     const nonceBytes = this.newNonce(this.nonceSize);
     const dataSignature = this.calculateDataSignature(this.apiKey, nonceBytes, dateStamp, data);
-    const authorizationParam = `id=${this.apiId},ts=${dateStamp},nonce=${nonceBytes.toString('hex')},sig=${dataSignature.toString('hex')}`;
+    const authorizationParam = `id=${this.apiId},ts=${dateStamp},nonce=${nonceBytes.toString("hex")},sig=${dataSignature.toString("hex")}`;
     return `${this.authScheme} ${authorizationParam}`;
   }
 
@@ -68,20 +68,20 @@ class VeracodeClient {
 
   async _xmlRequest (options) {
     const uri = new URL(options.endpoint, options.apiBase || this.apiBase);
-    const method = (options.form || options.formData) ? 'POST' : 'GET';
+    const method = (options.form || options.formData) ? "POST" : "GET";
 
     const xmlResponse = await request({
       method,
       uri,
       headers: {
-        'Authorization': this.calculateAuthorizationHeader(uri, method)
+        "Authorization": this.calculateAuthorizationHeader(uri, method),
       },
       form: options.form,
       formData: options.formData,
-      gzip: true // Veracode recommends to use GZIP whenever possible
+      gzip: true, // Veracode recommends to use GZIP whenever possible
     });
 
-    const jsResponse = convert.xml2js(xmlResponse, {compact: true});
+    const jsResponse = convert.xml2js(xmlResponse, { compact: true });
 
     if (jsResponse.error) {
       throw new Error(jsResponse.error._text);
@@ -94,18 +94,18 @@ class VeracodeClient {
 
   async _restRequest (options) {
     const uri = new URL(options.endpoint, options.apiBase || this.apiBaseRest);
-    const method = 'GET';
+    const method = "GET";
 
     const response = await request({
       method,
       uri,
       headers: {
-        'Authorization': this.calculateAuthorizationHeader(uri, method)
-      }
+        "Authorization": this.calculateAuthorizationHeader(uri, method),
+      },
     });
     const responseParsed = JSON.parse(response);
 
-    const pathParts = options.endpoint.split('/');
+    const pathParts = options.endpoint.split("/");
     const resource = pathParts[pathParts.length - 1];
     return this.getEmbedded(responseParsed, resource);
   }
@@ -114,20 +114,20 @@ class VeracodeClient {
 
   async getApplications () {
     return this._restRequest({
-      endpoint: 'applications'
+      endpoint: "applications",
     });
   };
 
   async getFindings (applicationGuid) {
     return this._restRequest({
-      endpoint: `applications/${applicationGuid}/findings`
+      endpoint: `applications/${applicationGuid}/findings`,
     });
   };
 
   // "The getapplist.do call compiles a list of the applications in the portfolio."
   async getAppList () {
     const response = await this._xmlRequest({
-      endpoint: 'getapplist.do'
+      endpoint: "getapplist.do",
     });
 
     return this.controlledArray(response.applist.app);
@@ -136,10 +136,10 @@ class VeracodeClient {
   // "The getsandboxlist.do call returns a list of all the sandboxes associated with the specified application."
   async getSandboxList (options) {
     const response = await this._xmlRequest({
-      endpoint: 'getsandboxlist.do',
+      endpoint: "getsandboxlist.do",
       form: {
-        app_id: options.appId
-      }
+        app_id: options.appId,
+      },
     });
 
     return this.controlledArray(response.sandboxlist.sandbox);
@@ -148,11 +148,11 @@ class VeracodeClient {
   // "The createsandbox.do call creates a sandbox for the specified application."
   async createSandbox (options) {
     const response = await this._xmlRequest({
-      endpoint: 'createsandbox.do',
+      endpoint: "createsandbox.do",
       form: {
         app_id: options.appId,
-        sandbox_name: options.sandboxName
-      }
+        sandbox_name: options.sandboxName,
+      },
     });
 
     return response.sandboxinfo;
@@ -161,11 +161,11 @@ class VeracodeClient {
   // "The getbuildlist call produces a list of the policy or sandbox scans of the application that are currently in progress or already complete."
   async getBuildList (options) {
     const response = await this._xmlRequest({
-      endpoint: 'getbuildlist.do',
+      endpoint: "getbuildlist.do",
       form: {
         app_id: options.appId,
-        sandbox_id: options.sandboxId
-      }
+        sandbox_id: options.sandboxId,
+      },
     });
 
     return this.controlledArray(response.buildlist.build);
@@ -175,13 +175,13 @@ class VeracodeClient {
   // Does not include sandboxes
   async getAppBuilds (options = {}) {
     const response = await this._xmlRequest({
-      endpoint: 'getappbuilds.do',
+      endpoint: "getappbuilds.do",
       apiBase: this.apiBase4, // note the use of API v4, this call is not available in v5
       form: {
         report_changed_since: options.reportChangedSince,
         only_latest: options.onlyLatest,
-        include_in_progress: options.includeInProgress
-      }
+        include_in_progress: options.includeInProgress,
+      },
     });
 
     return this.controlledArray(response.applicationbuilds.application);
@@ -190,10 +190,10 @@ class VeracodeClient {
   // "The detailedreport.do call returns a detailed XML report of the scan results for the specified build."
   async detailedReport (options) {
     const response = await this._xmlRequest({
-      endpoint: 'detailedreport.do',
+      endpoint: "detailedreport.do",
       form: {
-        build_id: options.buildId
-      }
+        build_id: options.buildId,
+      },
     });
 
     return response.detailedreport;
@@ -203,7 +203,7 @@ class VeracodeClient {
   async uploadFile (options) {
     const formData = {
       app_id: options.appId,
-      file: fs.createReadStream(options.file)
+      file: fs.createReadStream(options.file),
     };
 
     // Can't have undefined or null values in formData above:
@@ -217,8 +217,8 @@ class VeracodeClient {
     }
 
     const response = await this._xmlRequest({
-      endpoint: 'uploadfile.do',
-      formData
+      endpoint: "uploadfile.do",
+      formData,
     });
 
     return response.filelist;
@@ -227,13 +227,13 @@ class VeracodeClient {
   // "The beginprescan call runs the prescan of the application and determines whether the auto-scan feature is on or off"
   async beginPrescan (options) {
     const response = await this._xmlRequest({
-      endpoint: 'beginprescan.do',
+      endpoint: "beginprescan.do",
       form: {
         app_id: options.appId,
         auto_scan: options.autoScan,
         sandbox_id: options.sandboxId,
-        scan_all_nonfatal_top_level_modules: options.scanAllNonfatalTopLevelModules
-      }
+        scan_all_nonfatal_top_level_modules: options.scanAllNonfatalTopLevelModules,
+      },
     });
 
     return response.buildinfo;
@@ -242,7 +242,7 @@ class VeracodeClient {
   // "Creates a new application in the portfolio."
   async createApp (options) {
     const response = await this._xmlRequest({
-      endpoint: 'createapp.do',
+      endpoint: "createapp.do",
       form: {
         app_name: options.appName, // required
         description: options.description,
@@ -259,8 +259,8 @@ class VeracodeClient {
         deployment_method: options.deploymentMethod,
         web_application: options.webApplication,
         archer_app_name: options.archerAppName,
-        tags: options.tags
-      }
+        tags: options.tags,
+      },
     });
 
     return response.appinfo;
@@ -269,15 +269,15 @@ class VeracodeClient {
   // "The createbuild.do call creates a new build of an existing application in the portfolio."
   async createBuild (options) {
     const response = await this._xmlRequest({
-      endpoint: 'createbuild.do',
+      endpoint: "createbuild.do",
       form: {
         app_id: options.appId,
         version: options.appVersion,
         lifecycle_stage: options.lifecycleStage,
         launch_date: options.launchDate,
         sandbox_id: options.sandboxId,
-        legacy_scan_engine: options.legacyScanEngine
-      }
+        legacy_scan_engine: options.legacyScanEngine,
+      },
     });
 
     return response.buildinfo;
@@ -286,12 +286,12 @@ class VeracodeClient {
   // "The getbuildinfo call provides information about the most recent or specific scan of the application."
   async getBuildInfo (options) {
     const response = await this._xmlRequest({
-      endpoint: 'getbuildinfo.do',
+      endpoint: "getbuildinfo.do",
       form: {
         app_id: options.appId,
         build_id: options.buildId,
-        sandbox_id: options.sandboxId
-      }
+        sandbox_id: options.sandboxId,
+      },
     });
 
     return response.buildinfo;
@@ -300,10 +300,10 @@ class VeracodeClient {
   // "The deleteapp.do call deletes an existing application in the portfolio."
   async deleteApp (options) {
     const response = await this._xmlRequest({
-      endpoint: 'deleteapp.do',
+      endpoint: "deleteapp.do",
       form: {
-        app_id: options.appId
-      }
+        app_id: options.appId,
+      },
     });
 
     return this.controlledArray(response.applist.app);
@@ -313,18 +313,18 @@ class VeracodeClient {
   createZipArchive (directory, zipName, ignore) {
     return new Promise((resolve, reject) => {
       const output = fs.createWriteStream(zipName);
-      const archive = archiver('zip', {
-        zlib: {level: 9}
+      const archive = archiver("zip", {
+        zlib: { level: 9 },
       });
 
-      output.on('close', () => {
+      output.on("close", () => {
         // return size of archive in bytes
         resolve(archive.pointer());
       });
 
       // "good practice to catch warnings (ie stat failures and other non-blocking errors)"
-      archive.on('warning', (warn) => {
-        if (warn.code === 'ENOENT') {
+      archive.on("warning", (warn) => {
+        if (warn.code === "ENOENT") {
           // log warning
           console.log(`Warning: ${warn.message}`);
         } else {
@@ -333,14 +333,14 @@ class VeracodeClient {
       });
 
       // "good practice to catch this error explicitly"
-      archive.on('error', reject);
+      archive.on("error", reject);
 
       // pipe archive data to the file
       archive.pipe(output);
 
-      archive.glob('**/*', {
+      archive.glob("**/*", {
         cwd: directory,
-        ignore
+        ignore,
       }, {});
 
       archive.finalize();
@@ -349,11 +349,11 @@ class VeracodeClient {
 
   // xml deserialization returns array if multiple objects, and single object if just one
   // this function ensures an [empty] array is returned so downstream can safely process it
-  controlledArray(a) {
-    return typeof a === 'undefined' ? [] : [].concat(a);
+  controlledArray (a) {
+    return typeof a === "undefined" ? [] : [].concat(a);
   }
 
-  getEmbedded(response, resource) {
+  getEmbedded (response, resource) {
     if (response._embedded) {
       return response._embedded[resource];
     } else {
