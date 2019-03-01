@@ -7,7 +7,7 @@ documentation](https://help.veracode.com/reader/LMv_dtSHyb7iIxAQznC~9w/FhxRdiWf5
 ## Install
 
 ```bash
-yarn add @lifeomic/veracode-client-js
+yarn add @jupiterone/veracode-client
 ```
 
 ## Usage
@@ -23,7 +23,7 @@ Usage example:
 ```javascript
 const os = require('os');
 
-const VeracodeClient = require('@lifeomic/veracode-client');
+const VeracodeClient = require('@jupiterone/veracode-client');
 
 const veraClient = new VeracodeClient({
   apiId: process.env.VERA_ID,
