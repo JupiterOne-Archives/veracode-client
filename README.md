@@ -79,11 +79,20 @@ Now you'll be able to run the integration tests with `yarn test:integration`.
 
 ## Notes
 
- 1. Not all functions are currently implemented. List of implemented functions:
+ 1. Not all functions are currently implemented.
+
+    List of implemented REST functions:
 
     |VeracodeClient method|API endpoint|
     |---|---|
-    |getAppList|getapplist.do |
+    |getApplications|applications|
+    |getFindings|applications/{applicationGUID}/findings|
+
+    List of implemented XML functions:
+
+    |VeracodeClient method|API endpoint|
+    |---|---|
+    |getAppList|getapplist.do|
     |getSandboxList|getsandboxlist.do|
     |createSandbox|createsandbox.do|
     |getBuildList|getbuildlist.do|
