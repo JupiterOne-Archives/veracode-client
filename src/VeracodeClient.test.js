@@ -75,9 +75,8 @@ describe("constructor", () => {
     // We have to wrap the constructor in a function because expect doesn't work
     // with constructors.
     expect(() => {
-      const client = new VeracodeClient();
-      // Without this line, the linter will complain about client being unused.
-      expect(client).toBe(undefined);
+      // eslint-disable-next-line no-new
+      new VeracodeClient();
     }).toThrow("must be defined");
   });
 });
