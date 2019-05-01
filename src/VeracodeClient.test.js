@@ -70,6 +70,17 @@ test("#calculateAuthorizationHeader", async () => {
   expect(authHeader).toBe(mockAuthHeader(url, "GET"));
 });
 
+describe("constructor", () => {
+  test("throws error when apiId and apiKey are undefined", async () => {
+    // We have to wrap the constructor in a function because expect doesn't work
+    // with constructors.
+    expect(() => {
+      // eslint-disable-next-line no-new
+      new VeracodeClient();
+    }).toThrow("must be defined");
+  });
+});
+
 describe("#_xmlRequest", () => {
   test("parses xml", async () => {
     request.mockResolvedValue(`
@@ -132,6 +143,18 @@ describe("#_restRequest", () => {
     request.mockResolvedValue("{}");
     const response = await veracodeClient._restRequest({ endpoint: "applications" });
     expect(response).toEqual([]);
+  });
+
+  test("calls request with query params if they are provided", async () => {
+    await veracodeClient._restRequest({ endpoint: "findings", query: "modified_after=2018-12-31" });
+    const expectedUrl = new URL("findings?modified_after=2018-12-31", veracodeClient.apiBaseRest);
+    expect(request).toHaveBeenCalledWith({
+      method: "GET",
+      uri: expectedUrl,
+      headers: {
+        "Authorization": mockAuthHeader(expectedUrl, "GET"),
+      },
+    });
   });
 });
 

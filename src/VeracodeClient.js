@@ -93,7 +93,10 @@ class VeracodeClient {
   /* Veracode REST API Wrapper */
 
   async _restRequest (options) {
-    const uri = new URL(options.endpoint, options.apiBase || this.apiBaseRest);
+    let uriString = options.endpoint;
+    uriString = options.query ? options.endpoint + "?" + options.query : options.endpoint;
+
+    const uri = new URL(uriString, options.apiBase || this.apiBaseRest);
     const method = "GET";
 
     const response = await request({
@@ -118,10 +121,16 @@ class VeracodeClient {
     });
   };
 
-  async getFindings (applicationGuid) {
-    return this._restRequest({
+  async getFindings (applicationGuid, modifiedAfter) {
+    const requestOptions = {
       endpoint: `applications/${applicationGuid}/findings`,
-    });
+    };
+
+    if (modifiedAfter) {
+      requestOptions.query = `modified_after=${modifiedAfter}`;
+    }
+
+    return this._restRequest(requestOptions);
   };
 
   // "The getapplist.do call compiles a list of the applications in the portfolio."
