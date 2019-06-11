@@ -271,3 +271,19 @@ describe("#createZipArchive", async () => {
     mockArchiver.simulate("error", { code: "borked", message: "it borked" });
   });
 });
+
+describe("#summaryReport", () => {
+  test("get summary report with all options", async () => {
+    request.mockResolvedValue("<summaryReport></summaryReport>");
+
+    await veracodeClient.summaryReport({ buildId: "123" });
+
+    const expectedUrl = new URL("summaryreport.do", veracodeClient.apiBase4);
+    expect(request).toBeCalledWith({
+      ...baseRequestArg(expectedUrl),
+      form: {
+        build_id: "123",
+      },
+    });
+  });
+});
