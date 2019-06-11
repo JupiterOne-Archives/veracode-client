@@ -97,6 +97,7 @@ Now you'll be able to run the integration tests with `yarn test:integration`.
     |createSandbox|createsandbox.do|
     |getBuildList|getbuildlist.do|
     |getAppBuilds|getappbuilds.do|
+    |summaryReport|summaryreport.do|
     |detailedReport|detailedreport.do|
     |uploadFile|uploadfile.do|
     |beginPrescan|beginprescan.do|

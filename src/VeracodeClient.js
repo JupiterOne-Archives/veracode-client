@@ -196,6 +196,19 @@ class VeracodeClient {
     return this.controlledArray(response.applicationbuilds.application);
   }
 
+  // "The summaryreport.do call returns a summary XML report of the scan results for the specified build."
+  async summaryReport (options) {
+    const response = await this._xmlRequest({
+      endpoint: "summaryreport.do",
+      apiBase: this.apiBase4, // note the use of API v4, this call is not available in v5
+      form: {
+        build_id: options.buildId,
+      },
+    });
+
+    return response.summaryreport;
+  }
+
   // "The detailedreport.do call returns a detailed XML report of the scan results for the specified build."
   async detailedReport (options) {
     const response = await this._xmlRequest({
