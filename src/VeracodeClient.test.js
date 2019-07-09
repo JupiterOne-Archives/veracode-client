@@ -156,6 +156,60 @@ describe("#_restRequest", () => {
       },
     });
   });
+
+  test("pages through results", async () => {
+    const nextLink = `${veracodeClient.apiBaseRest}applications?limit=100&page=1`;
+    request.mockResolvedValueOnce(`
+    {
+      "_embedded": {
+        "applications": [{
+          "guid": "some-long-guid",
+          "id": 123456
+        }]
+      },
+      "_links": {
+        "next": {
+          "href": "${nextLink}"
+        }
+      }
+    }
+    `);
+    request.mockResolvedValueOnce(`
+    {
+      "_embedded": {
+        "applications": [{
+          "guid": "some-other-guid",
+          "id": 414141
+        }]
+      },
+      "_links": {}
+    }
+    `);
+    const response = await veracodeClient._restRequest({ endpoint: "applications" });
+    const expectedUrl = new URL("applications", veracodeClient.apiBaseRest);
+    expect(request).toBeCalledTimes(2);
+    expect(request).toBeCalledWith({
+      method: "GET",
+      uri: expectedUrl,
+      headers: {
+        "Authorization": mockAuthHeader(expectedUrl, "GET"),
+      },
+    });
+    expect(request).toBeCalledWith({
+      method: "GET",
+      uri: new URL(nextLink),
+      headers: {
+        "Authorization": mockAuthHeader(new URL(nextLink), "GET"),
+      },
+    });
+    expect(response).toEqual([{
+      guid: "some-long-guid",
+      id: 123456,
+    }, {
+      guid: "some-other-guid",
+      id: 414141,
+    }]);
+  });
 });
 
 describe("#uploadFile", async () => {
