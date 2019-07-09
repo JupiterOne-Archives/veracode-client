@@ -56,11 +56,22 @@ class VeracodeClient {
     const url = new URL(urlString);
     const hostName = url.hostname;
     const veraURL = url.pathname + url.search;
-    const data = `id=${this.apiId}&host=${hostName}&url=${veraURL}&method=${httpMethod}`;
+    const data = `id=${
+      this.apiId
+    }&host=${hostName}&url=${veraURL}&method=${httpMethod}`;
     const dateStamp = this.currentDateStamp();
     const nonceBytes = this.newNonce(this.nonceSize);
-    const dataSignature = this.calculateDataSignature(this.apiKey, nonceBytes, dateStamp, data);
-    const authorizationParam = `id=${this.apiId},ts=${dateStamp},nonce=${nonceBytes.toString("hex")},sig=${dataSignature.toString("hex")}`;
+    const dataSignature = this.calculateDataSignature(
+      this.apiKey,
+      nonceBytes,
+      dateStamp,
+      data
+    );
+    const authorizationParam = `id=${
+      this.apiId
+    },ts=${dateStamp},nonce=${nonceBytes.toString(
+      "hex"
+    )},sig=${dataSignature.toString("hex")}`;
     return `${this.authScheme} ${authorizationParam}`;
   }
 
@@ -68,13 +79,13 @@ class VeracodeClient {
 
   async _xmlRequest (options) {
     const uri = new URL(options.endpoint, options.apiBase || this.apiBase);
-    const method = (options.form || options.formData) ? "POST" : "GET";
+    const method = options.form || options.formData ? "POST" : "GET";
 
     const xmlResponse = await request({
       method,
       uri,
       headers: {
-        "Authorization": this.calculateAuthorizationHeader(uri, method),
+        Authorization: this.calculateAuthorizationHeader(uri, method),
       },
       form: options.form,
       formData: options.formData,
@@ -94,23 +105,37 @@ class VeracodeClient {
 
   async _restRequest (options) {
     let uriString = options.endpoint;
-    uriString = options.query ? options.endpoint + "?" + options.query : options.endpoint;
-
-    const uri = new URL(uriString, options.apiBase || this.apiBaseRest);
+    uriString = options.query
+      ? options.endpoint + "?" + options.query
+      : options.endpoint;
     const method = "GET";
 
-    const response = await request({
-      method,
-      uri,
-      headers: {
-        "Authorization": this.calculateAuthorizationHeader(uri, method),
-      },
-    });
-    const responseParsed = JSON.parse(response);
+    let uri = new URL(uriString, options.apiBase || this.apiBaseRest);
+    const resources = [];
 
-    const pathParts = options.endpoint.split("/");
-    const resource = pathParts[pathParts.length - 1];
-    return this.getEmbedded(responseParsed, resource);
+    do {
+      const response = await request({
+        method,
+        uri,
+        headers: {
+          Authorization: this.calculateAuthorizationHeader(uri, method),
+        },
+      });
+      const responseParsed = JSON.parse(response);
+
+      const pathParts = options.endpoint.split("/");
+      const resource = pathParts[pathParts.length - 1];
+
+      resources.push(...this.getEmbedded(responseParsed, resource));
+
+      if (responseParsed._links && responseParsed._links.next) {
+        uri = new URL(responseParsed._links.next.href);
+      } else {
+        uri = null;
+      }
+    } while (uri);
+
+    return resources;
   }
 
   /* Veracode API functions */
@@ -119,7 +144,7 @@ class VeracodeClient {
     return this._restRequest({
       endpoint: "applications",
     });
-  };
+  }
 
   async getFindings (applicationGuid, modifiedAfter) {
     const requestOptions = {
@@ -131,7 +156,7 @@ class VeracodeClient {
     }
 
     return this._restRequest(requestOptions);
-  };
+  }
 
   // "The getapplist.do call compiles a list of the applications in the portfolio."
   async getAppList () {
@@ -254,7 +279,8 @@ class VeracodeClient {
         app_id: options.appId,
         auto_scan: options.autoScan,
         sandbox_id: options.sandboxId,
-        scan_all_nonfatal_top_level_modules: options.scanAllNonfatalTopLevelModules,
+        scan_all_nonfatal_top_level_modules:
+          options.scanAllNonfatalTopLevelModules,
       },
     });
 
@@ -345,7 +371,7 @@ class VeracodeClient {
       });
 
       // "good practice to catch warnings (ie stat failures and other non-blocking errors)"
-      archive.on("warning", (warn) => {
+      archive.on("warning", warn => {
         if (warn.code === "ENOENT") {
           // log warning
           console.log(`Warning: ${warn.message}`);
@@ -360,10 +386,14 @@ class VeracodeClient {
       // pipe archive data to the file
       archive.pipe(output);
 
-      archive.glob("**/*", {
-        cwd: directory,
-        ignore,
-      }, {});
+      archive.glob(
+        "**/*",
+        {
+          cwd: directory,
+          ignore,
+        },
+        {}
+      );
 
       archive.finalize();
     });
