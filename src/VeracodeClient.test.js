@@ -211,7 +211,7 @@ describe("#_restRequest", () => {
     }]);
   });
 
-  test("pages through results", async () => {
+  test("supports disabling paging", async () => {
     request.mockResolvedValueOnce(`
     {
       "_embedded": {
