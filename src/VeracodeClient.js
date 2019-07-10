@@ -103,7 +103,7 @@ class VeracodeClient {
 
   /* Veracode REST API Wrapper */
 
-  async _restRequest (options) {
+  async _restRequest (options, page = true) {
     let uriString = options.endpoint;
     uriString = options.query
       ? options.endpoint + "?" + options.query
@@ -113,6 +113,7 @@ class VeracodeClient {
     let uri = new URL(uriString, options.apiBase || this.apiBaseRest);
     const resources = [];
 
+    /* eslint no-unmodified-loop-condition:0 */
     do {
       const response = await request({
         method,
@@ -133,7 +134,7 @@ class VeracodeClient {
       } else {
         uri = null;
       }
-    } while (uri);
+    } while (uri && page);
 
     return resources;
   }

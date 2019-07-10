@@ -1,7 +1,7 @@
 {
   "name": "@jupiterone/veracode-client",
   "description": "Veracode REST & XML API client",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "main": "src/VeracodeClient.js",
   "files": [
     "/src"
