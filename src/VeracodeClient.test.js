@@ -210,6 +210,38 @@ describe("#_restRequest", () => {
       id: 414141,
     }]);
   });
+
+  test("pages through results", async () => {
+    request.mockResolvedValueOnce(`
+    {
+      "_embedded": {
+        "applications": [{
+          "guid": "some-long-guid",
+          "id": 123456
+        }]
+      },
+      "_links": {
+        "next": {
+          "href": "${veracodeClient.apiBaseRest}applications?limit=100&page=1"
+        }
+      }
+    }
+    `);
+    const response = await veracodeClient._restRequest({ endpoint: "applications" }, false);
+    const expectedUrl = new URL("applications", veracodeClient.apiBaseRest);
+    expect(request).toBeCalledTimes(1);
+    expect(request).toBeCalledWith({
+      method: "GET",
+      uri: expectedUrl,
+      headers: {
+        "Authorization": mockAuthHeader(expectedUrl, "GET"),
+      },
+    });
+    expect(response).toEqual([{
+      guid: "some-long-guid",
+      id: 123456,
+    }]);
+  });
 });
 
 describe("#uploadFile", async () => {
