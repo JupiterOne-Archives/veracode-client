@@ -106,6 +106,19 @@ describe("#_xmlRequest", () => {
     });
   });
 
+  test("returns xml", async () => {
+    const xml = `
+    <test account_id="123" app_id="456">
+      <nested nested_id="789"/>
+    </test>
+    `;
+    request.mockResolvedValue(xml);
+    const response = await veracodeClient._xmlRequest({ endpoint: "mytest.do", asXml: true });
+    const expectedUrl = new URL("mytest.do", veracodeClient.apiBase);
+    expect(request).toBeCalledWith(baseRequestArg(expectedUrl, "GET"));
+    expect(response).toEqual(xml);
+  });
+
   test("throws error", async () => {
     request.mockResolvedValue("<error>Baby did a boom boom</error>");
     expect(veracodeClient._xmlRequest({ endpoint: "mytest.do" })).rejects.toThrow("Baby did a boom boom");
