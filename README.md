@@ -16,6 +16,9 @@ For convenience, all methods use objects to pass parameters, e.g. when the
 original function expects parameters `app_id` and `sandbox_id`, VeracodeClient
 function would be called the following object as parameter: `{appId, sandboxId}`
 
+By default, calls return JSON.  When creating the VeracodeClient you can set
+`returnXml` to `true` if you prefer to get back XML and convert it yourself.
+
 Please see tests for more examples.
 
 Usage example:
@@ -27,7 +30,8 @@ const VeracodeClient = require('@jupiterone/veracode-client');
 
 const veraClient = new VeracodeClient({
   apiId: process.env.VERA_ID,
-  apiKey: process.env.VERA_KEY
+  apiKey: process.env.VERA_KEY,
+  [returnXml: <boolean>]
 });
 
 const testAppInfo = {

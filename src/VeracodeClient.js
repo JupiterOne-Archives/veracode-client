@@ -10,7 +10,7 @@ const archiver = require("archiver");
 
 /* Veracode HTTP request wrapper */
 class VeracodeClient {
-  constructor (apiId, apiKey) {
+  constructor (apiId, apiKey, returnXml = false) {
     // Errors returned on undefined API credentials are too confusing
     if (!(apiId && apiKey)) {
       throw new Error("Both Veracode API ID and key must be defined");
@@ -18,6 +18,7 @@ class VeracodeClient {
 
     this.apiId = apiId;
     this.apiKey = apiKey;
+    this.returnXml = returnXml;
 
     this.hashAlgorithm = "sha256";
     this.authScheme = "VERACODE-HMAC-SHA-256";
@@ -91,6 +92,10 @@ class VeracodeClient {
       formData: options.formData,
       gzip: true, // Veracode recommends to use GZIP whenever possible
     });
+
+    if (this.returnXml) {
+      return xmlResponse;
+    }
 
     const jsResponse = convert.xml2js(xmlResponse, { compact: true });
 
