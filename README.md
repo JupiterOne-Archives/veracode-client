@@ -73,6 +73,7 @@ of course):
 ```sh
 export VERA_ID=YOUR_VERACODE_ID
 export VERA_KEY=YOUR_VERACODE_SECRET
+export VERA_TEAM=SOME_TEAM_NAME_IN_YOUR_VERACODE_ACCOUNT // defaults to "Security"
 ```
 
 Now you'll be able to run the integration tests with `yarn test:integration`.
