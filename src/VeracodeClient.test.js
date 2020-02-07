@@ -258,7 +258,7 @@ describe("#_restRequest", () => {
   });
 });
 
-describe("#uploadFile", async () => {
+describe("#uploadFile", () => {
   test("uploads file with all options", async () => {
     request.mockResolvedValue("<filelist><file/></filelist>");
 
@@ -294,7 +294,7 @@ describe("#uploadFile", async () => {
   });
 });
 
-describe("#createZipArchive", async () => {
+describe("#createZipArchive", () => {
   let mockWriteStream = {
     registeredListeners: {},
 
