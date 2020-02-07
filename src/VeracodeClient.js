@@ -169,8 +169,8 @@ class VeracodeClient {
     const response = await this._xmlRequest({
       endpoint: "getapplist.do",
     });
-
-    return this.controlledArray(response.applist.app);
+    /* istanbul ignore next */
+    return this.returnXml ? response : this.controlledArray(response.applist.app);
   }
 
   // "The getsandboxlist.do call returns a list of all the sandboxes associated with the specified application."
@@ -181,8 +181,8 @@ class VeracodeClient {
         app_id: options.appId,
       },
     });
-
-    return this.controlledArray(response.sandboxlist.sandbox);
+    /* istanbul ignore next */
+    return this.returnXml ? response : this.controlledArray(response.sandboxlist.sandbox);
   }
 
   // "The createsandbox.do call creates a sandbox for the specified application."
@@ -194,8 +194,8 @@ class VeracodeClient {
         sandbox_name: options.sandboxName,
       },
     });
-
-    return response.sandboxinfo;
+    /* istanbul ignore next */
+    return this.returnXml ? response : response.sandboxinfo;
   }
 
   // "The getbuildlist call produces a list of the policy or sandbox scans of the application that are currently in progress or already complete."
@@ -207,8 +207,8 @@ class VeracodeClient {
         sandbox_id: options.sandboxId,
       },
     });
-
-    return this.controlledArray(response.buildlist.build);
+    /* istanbul ignore next */
+    return this.returnXml ? response : this.controlledArray(response.buildlist.build);
   }
 
   // The getappbuilds.do call compiles a detailed list of applications and statuses, including all the application and scan profile data
@@ -223,8 +223,8 @@ class VeracodeClient {
         include_in_progress: options.includeInProgress,
       },
     });
-
-    return this.controlledArray(response.applicationbuilds.application);
+    /* istanbul ignore next */
+    return this.returnXml ? response : this.controlledArray(response.applicationbuilds.application);
   }
 
   // "The summaryreport.do call returns a summary XML report of the scan results for the specified build."
@@ -236,8 +236,8 @@ class VeracodeClient {
         build_id: options.buildId,
       },
     });
-
-    return response.summaryreport;
+    /* istanbul ignore next */
+    return this.returnXml ? response : response.summaryreport;
   }
 
   // "The detailedreport.do call returns a detailed XML report of the scan results for the specified build."
@@ -248,8 +248,8 @@ class VeracodeClient {
         build_id: options.buildId,
       },
     });
-
-    return response.detailedreport;
+    /* istanbul ignore next */
+    return this.returnXml ? response : response.detailedreport;
   }
 
   // "The uploadfile.do call uploads a file to an existing application or creates a new build if one does not already exist."
@@ -273,8 +273,8 @@ class VeracodeClient {
       endpoint: "uploadfile.do",
       formData,
     });
-
-    return response.filelist;
+    /* istanbul ignore next */
+    return this.returnXml ? response : response.filelist;
   }
 
   // "The beginprescan call runs the prescan of the application and determines whether the auto-scan feature is on or off"
@@ -289,8 +289,8 @@ class VeracodeClient {
           options.scanAllNonfatalTopLevelModules,
       },
     });
-
-    return response.buildinfo;
+    /* istanbul ignore next */
+    return this.returnXml ? response : response.buildinfo;
   }
 
   // "Creates a new application in the portfolio."
@@ -316,8 +316,8 @@ class VeracodeClient {
         tags: options.tags,
       },
     });
-
-    return response.appinfo;
+    /* istanbul ignore next */
+    return this.returnXml ? response : response.appinfo;
   }
 
   // "The createbuild.do call creates a new build of an existing application in the portfolio."
@@ -333,8 +333,8 @@ class VeracodeClient {
         legacy_scan_engine: options.legacyScanEngine,
       },
     });
-
-    return response.buildinfo;
+    /* istanbul ignore next */
+    return this.returnXml ? response : response.buildinfo;
   }
 
   // "The getbuildinfo call provides information about the most recent or specific scan of the application."
@@ -347,8 +347,8 @@ class VeracodeClient {
         sandbox_id: options.sandboxId,
       },
     });
-
-    return response.buildinfo;
+    /* istanbul ignore next */
+    return this.returnXml ? response : response.buildinfo;
   }
 
   // "The deleteapp.do call deletes an existing application in the portfolio."
@@ -359,8 +359,8 @@ class VeracodeClient {
         app_id: options.appId,
       },
     });
-
-    return this.controlledArray(response.applist.app);
+    /* istanbul ignore next */
+    return this.returnXml ? response : this.controlledArray(response.applist.app);
   }
 
   // Creates a zip archive of a given directory ignoring provided patterns (glob)
