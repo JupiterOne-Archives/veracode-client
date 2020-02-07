@@ -17,7 +17,7 @@ const testApp = {
   appVersion: `test-version-${somethingUnique}`,
   sandboxName: `test-sandbox-${somethingUnique}`,
   businessCriticality: "High", // 'High' is used by security-scan, so using it here as well
-  teams: "Security", // Only security team will get notifications about this test app
+  teams: process.env.VERA_TEAM || "Security", // Only security team will get notifications about this test app
   autoScan: true, // Required to start scan automatically after pre-scan
   description: "This application is used to test veracode-client",
 };
