@@ -6,6 +6,9 @@
   "files": [
     "/src"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=8.10"
   },

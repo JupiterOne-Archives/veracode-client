@@ -2,8 +2,20 @@ language: node_js
 node_js:
   - "8.10"
   - "10"
-
+  - "12"
 notifications:
   email:
     on_success: never
     on_failure: always
+deploy:
+  provider: npm
+  edge: true
+  email: npm@jupiterone.io
+  api_key:
+    secure: "nzsXLCZwKsW7pcZjcmmdKNEwzhaKfXt4Ei8wy7Nq7wogL0J99UUqkxjG/7MBC7fXZAL6eyD53NhXpgUPeMHdQE5Km9kNOLymt9DqwjWhlW8ug+rbMrS4zyYihwIkm5iQgtEzMsLA2pJGHeojhwlDEt8YVaB4xIDTL343VYgz6jhE3UcMaF0oDmKhBz00/x1pv5cJHqJINHYXwsi2yzyNcJ/kW3lFnONm9x1KGOV9RTSFtJi5Lh/GtFXkBPNFtDtzpKVTHzNFpa9L0jwRIoxs9blxSPVuXBmat/2/fvlwwpUPcTkrtjPI0lJsoIHPKN0XL/73XiU39vm1oWNOWutVpsIxIhJwzbvWj1q/nLPjhto/AEGdUz/7HhpzpeCQZjbm91bMEDr/s9/ZIoGid4A6SM0xmT2BJevHqCVrUzmYdC05+m8PQau0Y1u74wTFHfkHMmxin17+7Y0DLrLvW/FstGtOi+Dz0NMqP39oGdB8J1UOJWep7Z9ABfhDBwcRznmBb9YPwZNI8BR9bDBrMETRqT/YPLptM4aXo1RMxwkloxZBN/vrCg7ereVomKpNR43GmWiWaS05WfkIcAWISDH59z+JPyithKs3xNkOD3mxe3A4ENFqk7nFwYtCZMa0GaEnHpb9xjKKAXfz6EhpMLtXW3ksFmOUma0jFKa46Visq/k="
+  skip_cleanup: true
+  on:
+    tags: true
+    branch: master
+    repo: JupiterOne/veracode-client
+    node: "12"

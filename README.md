@@ -1,5 +1,7 @@
 # veracode-client
 
+[![Build Status](https://travis-ci.org/JupiterOne/veracode-client.svg?branch=master)](https://travis-ci.org/JupiterOne/veracode-client)
+
 REST API client for Veracode. Uses xml-js to parse xml. Functionality follows
 [the original Veracode API
 documentation](https://help.veracode.com/reader/LMv_dtSHyb7iIxAQznC~9w/FhxRdiWf5qejrtajmjGtpw).
