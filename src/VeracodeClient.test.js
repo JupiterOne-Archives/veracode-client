@@ -113,9 +113,9 @@ describe("#_xmlRequest", () => {
     </test>
     `;
     request.mockResolvedValue(xml);
-    const veracodeClient = new VeracodeClient(mockApiId, mockApiSecret, true);
-    const response = await veracodeClient._xmlRequest({ endpoint: "mytest.do" });
-    const expectedUrl = new URL("mytest.do", veracodeClient.apiBase);
+    const xmlVeracodeClient = new VeracodeClient(mockApiId, mockApiSecret, true);
+    const response = await xmlVeracodeClient._xmlRequest({ endpoint: "mytest.do" });
+    const expectedUrl = new URL("mytest.do", xmlVeracodeClient.apiBase);
     expect(request).toBeCalledWith(baseRequestArg(expectedUrl, "GET"));
     expect(response).toEqual(xml);
   });
