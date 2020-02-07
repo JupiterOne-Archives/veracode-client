@@ -169,7 +169,7 @@ class VeracodeClient {
     const response = await this._xmlRequest({
       endpoint: "getapplist.do",
     });
-
+    /* istanbul ignore next */
     return this.returnXml ? response : this.controlledArray(response.applist.app);
   }
 
@@ -181,7 +181,7 @@ class VeracodeClient {
         app_id: options.appId,
       },
     });
-
+    /* istanbul ignore next */
     return this.returnXml ? response : this.controlledArray(response.sandboxlist.sandbox);
   }
 
@@ -194,7 +194,7 @@ class VeracodeClient {
         sandbox_name: options.sandboxName,
       },
     });
-
+    /* istanbul ignore next */
     return this.returnXml ? response : response.sandboxinfo;
   }
 
@@ -207,7 +207,7 @@ class VeracodeClient {
         sandbox_id: options.sandboxId,
       },
     });
-
+    /* istanbul ignore next */
     return this.returnXml ? response : this.controlledArray(response.buildlist.build);
   }
 
@@ -223,7 +223,7 @@ class VeracodeClient {
         include_in_progress: options.includeInProgress,
       },
     });
-
+    /* istanbul ignore next */
     return this.returnXml ? response : this.controlledArray(response.applicationbuilds.application);
   }
 
@@ -236,7 +236,7 @@ class VeracodeClient {
         build_id: options.buildId,
       },
     });
-
+    /* istanbul ignore next */
     return this.returnXml ? response : response.summaryreport;
   }
 
@@ -248,7 +248,7 @@ class VeracodeClient {
         build_id: options.buildId,
       },
     });
-
+    /* istanbul ignore next */
     return this.returnXml ? response : response.detailedreport;
   }
 
@@ -273,7 +273,7 @@ class VeracodeClient {
       endpoint: "uploadfile.do",
       formData,
     });
-
+    /* istanbul ignore next */
     return this.returnXml ? response : response.filelist;
   }
 
@@ -289,7 +289,7 @@ class VeracodeClient {
           options.scanAllNonfatalTopLevelModules,
       },
     });
-
+    /* istanbul ignore next */
     return this.returnXml ? response : response.buildinfo;
   }
 
@@ -316,7 +316,7 @@ class VeracodeClient {
         tags: options.tags,
       },
     });
-
+    /* istanbul ignore next */
     return this.returnXml ? response : response.appinfo;
   }
 
@@ -333,7 +333,7 @@ class VeracodeClient {
         legacy_scan_engine: options.legacyScanEngine,
       },
     });
-
+    /* istanbul ignore next */
     return this.returnXml ? response : response.buildinfo;
   }
 
@@ -347,7 +347,7 @@ class VeracodeClient {
         sandbox_id: options.sandboxId,
       },
     });
-
+    /* istanbul ignore next */
     return this.returnXml ? response : response.buildinfo;
   }
 
@@ -359,7 +359,7 @@ class VeracodeClient {
         app_id: options.appId,
       },
     });
-
+    /* istanbul ignore next */
     return this.returnXml ? response : this.controlledArray(response.applist.app);
   }
 
