@@ -40,7 +40,7 @@ beforeAll(async () => {
   // Locate the test app or create it if needed
   const searchResult = jspath.apply(
     `._attributes{.app_name === "${testApp.appName}"}.app_id`,
-    getAppListResult
+    getAppListResult,
   );
 
   // We want to know if there is a scenario when search for an application returns more than 1 app_id

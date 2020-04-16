@@ -6,7 +6,7 @@
 /* eslint promise/no-callback-in-promise:0 */
 const VeracodeClient = require("./VeracodeClient");
 const crypto = require("crypto");
-const request = require("request");
+const got = require("got");
 const { URL } = require("url");
 const fs = require("fs");
 const archiver = require("archiver");
@@ -23,8 +23,9 @@ jest.spyOn(crypto, "randomBytes").mockImplementation((size) => {
   return mockNonce;
 });
 
-jest.mock("request");
+jest.mock("got");
 jest.mock("fs");
+jest.mock("form-data");
 jest.mock("archiver");
 
 function computeHash (data, key) {
@@ -48,9 +49,10 @@ function mockAuthHeader (url, method) {
 function baseRequestArg (url, method = "POST") {
   return {
     method: method,
-    uri: url,
+    resolveBodyOnly: true,
+    responseType: "text",
     headers: {
-      "Authorization": mockAuthHeader(url, method),
+      Authorization: mockAuthHeader(url, method),
     },
     gzip: true,
   };
@@ -83,14 +85,14 @@ describe("constructor", () => {
 
 describe("#_xmlRequest", () => {
   test("parses xml", async () => {
-    request.mockResolvedValue(`
+    got.mockResolvedValue(`
     <test account_id="123" app_id="456">
       <nested nested_id="789"/>
     </test>
     `);
     const response = await veracodeClient._xmlRequest({ endpoint: "mytest.do" });
     const expectedUrl = new URL("mytest.do", veracodeClient.apiBase);
-    expect(request).toBeCalledWith(baseRequestArg(expectedUrl, "GET"));
+    expect(got).toBeCalledWith(expectedUrl, baseRequestArg(expectedUrl, "GET"));
     expect(response).toEqual({
       test: {
         _attributes: {
@@ -112,39 +114,38 @@ describe("#_xmlRequest", () => {
       <nested nested_id="789"/>
     </test>
     `;
-    request.mockResolvedValue(xml);
+    got.mockResolvedValue(xml);
     const xmlVeracodeClient = new VeracodeClient(mockApiId, mockApiSecret, true);
     const response = await xmlVeracodeClient._xmlRequest({ endpoint: "mytest.do" });
     const expectedUrl = new URL("mytest.do", xmlVeracodeClient.apiBase);
-    expect(request).toBeCalledWith(baseRequestArg(expectedUrl, "GET"));
+    expect(got).toBeCalledWith(expectedUrl, baseRequestArg(expectedUrl, "GET"));
     expect(response).toEqual(xml);
   });
 
   test("throws error", async () => {
-    request.mockResolvedValue("<error>Baby did a boom boom</error>");
+    got.mockResolvedValue("<error>Baby did a boom boom</error>");
     expect(veracodeClient._xmlRequest({ endpoint: "mytest.do" })).rejects.toThrow("Baby did a boom boom");
   });
 });
 
 describe("#_restRequest", () => {
   test("returns _embedded", async () => {
-    request.mockResolvedValue(`
-    {
-      "_embedded": {
-        "applications": [{
-          "guid": "some-long-guid",
-          "id": 123456
-        }]
-      }
-    }
-    `);
+    got.mockResolvedValue({
+      _embedded: {
+        applications: [{
+          guid: "some-long-guid",
+          id: 123456,
+        }],
+      },
+    });
     const response = await veracodeClient._restRequest({ endpoint: "applications" });
     const expectedUrl = new URL("applications", veracodeClient.apiBaseRest);
-    expect(request).toBeCalledWith({
+    expect(got).toBeCalledWith(expectedUrl, {
       method: "GET",
-      uri: expectedUrl,
+      resolveBodyOnly: true,
+      responseType: "json",
       headers: {
-        "Authorization": mockAuthHeader(expectedUrl, "GET"),
+        Authorization: mockAuthHeader(expectedUrl, "GET"),
       },
     });
     expect(response).toEqual([{
@@ -154,7 +155,7 @@ describe("#_restRequest", () => {
   });
 
   test("returns empty array if no _embedded", async () => {
-    request.mockResolvedValue("{}");
+    got.mockResolvedValue({});
     const response = await veracodeClient._restRequest({ endpoint: "applications" });
     expect(response).toEqual([]);
   });
@@ -162,58 +163,57 @@ describe("#_restRequest", () => {
   test("calls request with query params if they are provided", async () => {
     await veracodeClient._restRequest({ endpoint: "findings", query: "modified_after=2018-12-31" });
     const expectedUrl = new URL("findings?modified_after=2018-12-31", veracodeClient.apiBaseRest);
-    expect(request).toHaveBeenCalledWith({
+    expect(got).toHaveBeenCalledWith(expectedUrl, {
       method: "GET",
-      uri: expectedUrl,
+      resolveBodyOnly: true,
+      responseType: "json",
       headers: {
-        "Authorization": mockAuthHeader(expectedUrl, "GET"),
+        Authorization: mockAuthHeader(expectedUrl, "GET"),
       },
     });
   });
 
   test("pages through results", async () => {
     const nextLink = `${veracodeClient.apiBaseRest}applications?limit=100&page=1`;
-    request.mockResolvedValueOnce(`
-    {
-      "_embedded": {
-        "applications": [{
-          "guid": "some-long-guid",
-          "id": 123456
-        }]
+    got.mockResolvedValueOnce({
+      _embedded: {
+        applications: [{
+          guid: "some-long-guid",
+          id: 123456,
+        }],
       },
-      "_links": {
-        "next": {
-          "href": "${nextLink}"
-        }
-      }
-    }
-    `);
-    request.mockResolvedValueOnce(`
-    {
-      "_embedded": {
-        "applications": [{
-          "guid": "some-other-guid",
-          "id": 414141
-        }]
-      },
-      "_links": {}
-    }
-    `);
-    const response = await veracodeClient._restRequest({ endpoint: "applications" });
-    const expectedUrl = new URL("applications", veracodeClient.apiBaseRest);
-    expect(request).toBeCalledTimes(2);
-    expect(request).toBeCalledWith({
-      method: "GET",
-      uri: expectedUrl,
-      headers: {
-        "Authorization": mockAuthHeader(expectedUrl, "GET"),
+      _links: {
+        next: {
+          href: nextLink,
+        },
       },
     });
-    expect(request).toBeCalledWith({
+    got.mockResolvedValueOnce({
+      _embedded: {
+        applications: [{
+          guid: "some-other-guid",
+          id: 414141,
+        }],
+      },
+      _links: {},
+    });
+    const response = await veracodeClient._restRequest({ endpoint: "applications" });
+    const expectedUrl = new URL("applications", veracodeClient.apiBaseRest);
+    expect(got).toBeCalledTimes(2);
+    expect(got).toBeCalledWith(expectedUrl, {
       method: "GET",
-      uri: new URL(nextLink),
+      resolveBodyOnly: true,
+      responseType: "json",
       headers: {
-        "Authorization": mockAuthHeader(new URL(nextLink), "GET"),
+        Authorization: mockAuthHeader(expectedUrl, "GET"),
+      },
+    });
+    expect(got).toBeCalledWith(new URL(nextLink), {
+      method: "GET",
+      resolveBodyOnly: true,
+      responseType: "json",
+      headers: {
+        Authorization: mockAuthHeader(new URL(nextLink), "GET"),
       },
     });
     expect(response).toEqual([{
@@ -226,30 +226,29 @@ describe("#_restRequest", () => {
   });
 
   test("supports disabling paging", async () => {
-    request.mockResolvedValueOnce(`
-    {
-      "_embedded": {
-        "applications": [{
-          "guid": "some-long-guid",
-          "id": 123456
-        }]
+    got.mockResolvedValueOnce({
+      _embedded: {
+        applications: [{
+          guid: "some-long-guid",
+          id: 123456,
+        }],
       },
-      "_links": {
-        "next": {
-          "href": "${veracodeClient.apiBaseRest}applications?limit=100&page=1"
-        }
-      }
-    }
-    `);
+      _links: {
+        next: {
+          href: veracodeClient.apiBaseRest + "applications?limit=100&page=1",
+        },
+      },
+    });
     const response = await veracodeClient._restRequest({ endpoint: "applications" }, false);
     const expectedUrl = new URL("applications", veracodeClient.apiBaseRest);
-    expect(request).toBeCalledTimes(1);
-    expect(request).toBeCalledWith({
+    expect(got).toBeCalledTimes(1);
+    expect(got).toBeCalledWith(expectedUrl, {
       method: "GET",
-      uri: expectedUrl,
       headers: {
-        "Authorization": mockAuthHeader(expectedUrl, "GET"),
+        Authorization: mockAuthHeader(expectedUrl, "GET"),
       },
+      resolveBodyOnly: true,
+      responseType: "json",
     });
     expect(response).toEqual([{
       guid: "some-long-guid",
@@ -260,13 +259,13 @@ describe("#_restRequest", () => {
 
 describe("#uploadFile", () => {
   test("uploads file with all options", async () => {
-    request.mockResolvedValue("<filelist><file/></filelist>");
+    got.mockResolvedValue("<filelist><file/></filelist>");
 
     await veracodeClient.uploadFile({ appId: "123", file: "my_lil_file.zip", sandboxId: "456", saveAs: "my_lil_file" });
     expect(fs.createReadStream).toBeCalledWith("my_lil_file.zip");
 
     const expectedUrl = new URL("uploadfile.do", veracodeClient.apiBase);
-    expect(request).toBeCalledWith({
+    expect(got).toBeCalledWith(expectedUrl, {
       ...baseRequestArg(expectedUrl),
       formData: {
         app_id: "123",
@@ -278,13 +277,13 @@ describe("#uploadFile", () => {
   });
 
   test("doesn't include sandbox_id or save_as if not provided in options", async () => {
-    request.mockResolvedValue("<filelist><file/></filelist>");
+    got.mockResolvedValue("<filelist><file/></filelist>");
 
     await veracodeClient.uploadFile({ appId: "123", file: "my_lil_file.zip" });
     expect(fs.createReadStream).toBeCalledWith("my_lil_file.zip");
 
     const expectedUrl = new URL("uploadfile.do", veracodeClient.apiBase);
-    expect(request).toBeCalledWith({
+    expect(got).toBeCalledWith(expectedUrl, {
       ...baseRequestArg(expectedUrl),
       formData: {
         app_id: "123",
@@ -295,7 +294,7 @@ describe("#uploadFile", () => {
 });
 
 describe("#createZipArchive", () => {
-  let mockWriteStream = {
+  const mockWriteStream = {
     registeredListeners: {},
 
     on: function (event, listener) {
@@ -307,7 +306,7 @@ describe("#createZipArchive", () => {
     },
   };
 
-  let mockArchiver = {
+  const mockArchiver = {
     registeredListeners: {},
 
     on: function (event, listener) {
@@ -374,12 +373,12 @@ describe("#createZipArchive", () => {
 
 describe("#summaryReport", () => {
   test("get summary report with all options", async () => {
-    request.mockResolvedValue("<summaryReport></summaryReport>");
+    got.mockResolvedValue("<summaryReport></summaryReport>");
 
     await veracodeClient.summaryReport({ buildId: "123" });
 
     const expectedUrl = new URL("summaryreport.do", veracodeClient.apiBase4);
-    expect(request).toBeCalledWith({
+    expect(got).toBeCalledWith(expectedUrl, {
       ...baseRequestArg(expectedUrl),
       form: {
         build_id: "123",

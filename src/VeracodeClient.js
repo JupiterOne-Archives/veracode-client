@@ -4,7 +4,8 @@ const { URL } = require("url");
 const fs = require("fs");
 
 // 3rd party libs
-const request = require("request-promise-native");
+const got = require("got");
+const FormData = require("form-data");
 const convert = require("xml-js");
 const archiver = require("archiver");
 
@@ -66,28 +67,38 @@ class VeracodeClient {
       this.apiKey,
       nonceBytes,
       dateStamp,
-      data
+      data,
     );
     const authorizationParam = `id=${
       this.apiId
     },ts=${dateStamp},nonce=${nonceBytes.toString(
-      "hex"
+      "hex",
     )},sig=${dataSignature.toString("hex")}`;
     return `${this.authScheme} ${authorizationParam}`;
+  }
+
+  _form (form) {
+    const formdata = new FormData();
+    for (const key in form) {
+      formdata.append(key, form[key]);
+    }
   }
 
   /* Veracode XML API Wrapper */
 
   async _xmlRequest (options) {
     const uri = new URL(options.endpoint, options.apiBase || this.apiBase);
-    const method = options.form || options.formData ? "POST" : "GET";
-
-    const xmlResponse = await request({
+    const formData = options.form || options.formData;
+    const method = formData ? "POST" : "GET";
+    const body = formData ? { body: this._form(formData) } : {};
+    const xmlResponse = await got(uri, {
+      ...body,
       method,
-      uri,
       headers: {
         Authorization: this.calculateAuthorizationHeader(uri, method),
       },
+      responseType: "text",
+      resolveBodyOnly: true,
       form: options.form,
       formData: options.formData,
       gzip: true, // Veracode recommends to use GZIP whenever possible
@@ -120,14 +131,14 @@ class VeracodeClient {
 
     /* eslint no-unmodified-loop-condition:0 */
     do {
-      const response = await request({
+      const responseParsed = await got(uri, {
         method,
-        uri,
         headers: {
           Authorization: this.calculateAuthorizationHeader(uri, method),
         },
+        responseType: "json",
+        resolveBodyOnly: true,
       });
-      const responseParsed = JSON.parse(response);
 
       const pathParts = options.endpoint.split("/");
       const resource = pathParts[pathParts.length - 1];
@@ -398,7 +409,7 @@ class VeracodeClient {
           cwd: directory,
           ignore,
         },
-        {}
+        {},
       );
 
       archive.finalize();
