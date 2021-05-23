@@ -28,6 +28,7 @@ class VeracodeClient {
     this.apiBase = "https://analysiscenter.veracode.com/api/5.0/";
     this.apiBase4 = "https://analysiscenter.veracode.com/api/4.0/"; // some functionality is only available in v4
     this.apiBaseRest = "https://api.veracode.com/appsec/v1/";
+    this.apiBaseRest2 = "https://api.veracode.com/appsec/v2/";
   }
 
   /* Authorization Header */
@@ -155,6 +156,7 @@ class VeracodeClient {
   async getFindings (applicationGuid, modifiedAfter) {
     const requestOptions = {
       endpoint: `applications/${applicationGuid}/findings`,
+      apiBase: this.apiBaseRest2,
     };
 
     if (modifiedAfter) {
