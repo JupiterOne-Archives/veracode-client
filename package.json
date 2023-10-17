@@ -1,7 +1,12 @@
 {
   "name": "@jupiterone/veracode-client",
-  "description": "Veracode REST & XML API client",
   "version": "0.4.1",
+  "description": "Veracode REST & XML API client",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JupiterOne/veracode-client"
+  },
+  "license": "MIT",
   "main": "src/VeracodeClient.js",
   "files": [
     "/src"
@@ -18,11 +23,6 @@
     "test:unit": "jest src/",
     "test:integration": "jest -i test/"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/JupiterOne/veracode-client.git"
-  },
-  "license": "MIT",
   "bugs": {
     "url": "https://github.com/JupiterOne/veracode-client/issues"
   },
